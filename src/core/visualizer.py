@@ -574,7 +574,7 @@ class BOMGUI:
 
             # 保存到文件
             try:
-                with open('../data/products/index.json', 'w') as f:
+                with open(f'{save_path}/products/index.json', 'w') as f:
                     json.dump(self.products_data, f, indent=2, ensure_ascii=False)
                 tk.messagebox.showinfo("成功", f"配方 {recipe_name} 已保存")
                 self.show_add_recipe_page()
@@ -706,7 +706,7 @@ class BOMGUI:
 
                 # 保存到文件
                 try:
-                    with open('../data/products/index.json', 'w') as f:
+                    with open(f'{save_path}/products/index.json', 'w') as f:
                         json.dump(self.products_data, f, indent=2, ensure_ascii=False)
                     messagebox.showinfo("成功", f"配方 '{recipe_name}' 已删除")
                 except Exception as e:
