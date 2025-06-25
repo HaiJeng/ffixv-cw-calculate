@@ -31,17 +31,50 @@ class BOMCalculator:
                 return dict(requirements)
         raise RuntimeError(f"{item_type}中{item_name} 不存在")
 
-    def calculate_requirements_by_id(self, item_type: str, item_id: int, quantity=1):
+    def calculate_requirements_by_id(self, item_type: str, item_id: int, quantity=1, include_all_levels=False):
         """
-        计算制作指定数量物品所需的所有基础材料
+        计算制作指定数量物品所需的材料
         :param item_type: 'product' 或 'material'
         :param item_id: 物品ID
         :param quantity: 需要制作的数量
-        :return: 基础材料需求字典 {base_id: required_quantity}
+        :param include_all_levels: 是否包含所有层级的材料（默认为False，只返回基础材料）
+        :return: 材料需求字典
         """
-        requirements = defaultdict(int)
-        self._calculate(item_type, item_id, quantity, requirements)
-        return dict(requirements)
+        if include_all_levels:
+            # 返回完整的材料树结构
+            return self._calculate_full_tree(item_type, item_id, quantity)
+        else:
+            # 保持原有逻辑，只返回基础材料
+            requirements = defaultdict(int)
+            self._calculate(item_type, item_id, quantity, requirements)
+            return dict(requirements)
+
+    def _calculate_full_tree(self, item_type, item_id, quantity):
+        """递归计算完整的材料树，包括所有层级"""
+        result = {'id': item_id, 'type': item_type, 'quantity': quantity, 'children': []}
+
+        if item_type == 'base':
+            return result
+
+        # 获取配方
+        if item_type == 'product':
+            recipe = self.product_map[item_id]['requirements']
+            output_qty = self.product_map[item_id].get('output', 1)
+            multiplier = quantity / output_qty
+        else:  # material
+            recipe = self.material_map[item_id]['requirements']
+            multiplier = quantity
+
+        # 递归计算每个成分
+        for ingredient in recipe:
+            ing_type = 'material' if 'material_id' in ingredient else 'base'
+            ing_id = ingredient.get('material_id', ingredient.get('base_id'))
+            ing_qty = ingredient['quantity'] * multiplier
+
+            child = self._calculate_full_tree(ing_type, ing_id, ing_qty)
+            result['children'].append(child)
+
+        return result
 
     def _calculate(self, item_type, item_id, quantity, requirements):
         if item_type == 'base':

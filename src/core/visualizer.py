@@ -4,6 +4,7 @@ import tkinter as tk
 from collections import defaultdict
 from tkinter import messagebox, ttk
 
+from src.core import calculator
 from src.core.calculator import BOMCalculator
 from src.core.config import save_path
 from src.core.generator import BOMGenerator
@@ -64,14 +65,23 @@ class BOMGUI:
         for product in self.products_data:
             recipe_listbox.insert(tk.END, product['name'])
 
+        # 查看配方按钮
+        def view_selected_recipe(return_callback):
+            selection = recipe_listbox.curselection()
+            if not selection:  # 检查是否有选中项
+                messagebox.showinfo("提示", "请先选择一个配方")
+                return
+
+            return_callback(recipe_listbox.get(selection))
+
         view_tree_button = tk.Button(self.root, text="查看配方树",
-                                     command=lambda: self.show_recipe_tree(
-                                         recipe_listbox.get(recipe_listbox.curselection())))
+                                     command=lambda: view_selected_recipe(self.show_recipe_tree)
+                                     )
         view_tree_button.pack(pady=10)
 
         add_recipe_button = tk.Button(self.root, text="添加到右侧列表",
-                                      command=lambda: self.add_recipe_to_selection(
-                                          recipe_listbox.get(recipe_listbox.curselection())))
+                                      command=lambda: view_selected_recipe(self.add_recipe_to_selection)
+                                      )
         add_recipe_button.pack(pady=10)
 
         selection_frame = tk.Frame(self.root)
@@ -80,11 +90,8 @@ class BOMGUI:
         selection_listbox = tk.Listbox(selection_frame, width=50)
         selection_listbox.pack(side=tk.LEFT)
 
-        quantity_entries = {}
-
         calculate_button = tk.Button(selection_frame, text="计算",
-                                     command=lambda: self.calculate_selected_recipes(selection_listbox,
-                                                                                     quantity_entries))
+                                     command=lambda: self.calculate_selected_recipes(selection_listbox))
         calculate_button.pack(side=tk.BOTTOM, pady=10)
 
         # 返回按钮
@@ -133,7 +140,7 @@ class BOMGUI:
                 self.recipe_listbox.delete(i)
                 break
 
-    def calculate_selected_recipes(self, selection_listbox, quantity_entries):
+    def calculate_selected_recipes(self, selection_listbox):
         # 获取所有选中的配方及其数量
         selected_recipes = []
         for i in range(selection_listbox.size()):
@@ -146,7 +153,8 @@ class BOMGUI:
                 return
 
         # 计算需求
-        total_requirements = defaultdict(float)
+        all_requirements = defaultdict(float)  # 存储所有层级的需求
+
         for name, qty in selected_recipes:
             # 查找配方
             product = next((p for p in self.products_data if p['name'] == name), None)
@@ -159,17 +167,35 @@ class BOMGUI:
 
             # 计算需要生产的批次（向上取整）
             batches = math.ceil(qty / output_qty) * output_qty
-            # 计算需求（基于批次数量而非直接使用所需数量）
-            requirements = self.calculator.calculate_requirements_by_id('product', product['id'], batches)
 
-            # 累加总需求
-            for item_id, req_qty in requirements.items():
-                total_requirements[item_id] += req_qty
+            # 获取完整的材料树
+            material_tree = self.calculator.calculate_requirements_by_id('product', product['id'], batches,
+                                                                         include_all_levels=True)
+
+            # 遍历材料树并收集所有层级的需求
+            def traverse_tree(node):
+                item_id = node['id']
+                item_type = node['type']
+                qty = node['quantity']
+
+                # 根据类型更新需求字典
+                if item_type == 'product':
+                    all_requirements[(item_id, 'product')] += qty
+                elif item_type == 'material':
+                    all_requirements[(item_id, 'material')] += qty
+                elif item_type == 'base':
+                    all_requirements[(item_id, 'base')] += qty
+
+                # 递归处理子节点
+                for child in node.get('children', []):
+                    traverse_tree(child)
+
+            traverse_tree(material_tree)
 
         # 显示结果
-        self.show_calculation_result(total_requirements)
+        self.show_calculation_result(all_requirements)
 
-    def show_calculation_result(self, requirements):
+    def show_calculation_result(self, all_requirements):
         # 清除当前界面
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -180,24 +206,53 @@ class BOMGUI:
         result_frame = tk.Frame(self.root)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
-        # 创建滚动条
-        scrollbar = tk.Scrollbar(result_frame)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        # 创建三个列的框架
+        finished_frame = tk.Frame(result_frame)
+        finished_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
+        semi_finished_frame = tk.Frame(result_frame)
+        semi_finished_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
+        raw_materials_frame = tk.Frame(result_frame)
+        raw_materials_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
 
-        # 创建结果列表
-        result_listbox = tk.Listbox(result_frame, width=80, yscrollcommand=scrollbar.set)
-        result_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=result_listbox.yview)
+        # 创建各列的标题
+        tk.Label(finished_frame, text="成品").pack(pady=5)
+        tk.Label(semi_finished_frame, text="半成品").pack(pady=5)
+        tk.Label(raw_materials_frame, text="原材料").pack(pady=5)
 
-        # 显示原材料需求
-        result_listbox.insert(tk.END, "原材料需求:")
-        for item_id, qty in requirements.items():
+        # 创建各列的滚动条和列表框
+        finished_scrollbar = tk.Scrollbar(finished_frame)
+        finished_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        finished_listbox = tk.Listbox(finished_frame, width=30, yscrollcommand=finished_scrollbar.set)
+        finished_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        finished_scrollbar.config(command=finished_listbox.yview)
+
+        semi_finished_scrollbar = tk.Scrollbar(semi_finished_frame)
+        semi_finished_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        semi_finished_listbox = tk.Listbox(semi_finished_frame, width=30, yscrollcommand=semi_finished_scrollbar.set)
+        semi_finished_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        semi_finished_scrollbar.config(command=semi_finished_listbox.yview)
+
+        raw_materials_scrollbar = tk.Scrollbar(raw_materials_frame)
+        raw_materials_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        raw_materials_listbox = tk.Listbox(raw_materials_frame, width=30, yscrollcommand=raw_materials_scrollbar.set)
+        raw_materials_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        raw_materials_scrollbar.config(command=raw_materials_listbox.yview)
+
+        # 分类显示材料需求
+        for (item_id, item_type), qty in all_requirements.items():
             # 查找材料名称
-            item_name = next(
-                (item['name'] for item in self.base_data if item['id'] == item_id),
-                f"未知材料(ID:{item_id})"
-            )
-            result_listbox.insert(tk.END, f"- {item_name}: {qty}")
+            if item_type == 'product':
+                item = next((p for p in self.products_data if p['id'] == item_id), None)
+                if item:
+                    finished_listbox.insert(tk.END, f"- {item['name']}: {int(qty)}")
+            elif item_type == 'material':
+                item = next((m for m in self.materials_data if m['id'] == item_id), None)
+                if item:
+                    semi_finished_listbox.insert(tk.END, f"- {item['name']}: {int(qty)}")
+            elif item_type == 'base':
+                item = next((b for b in self.base_data if b['id'] == item_id), None)
+                if item:
+                    raw_materials_listbox.insert(tk.END, f"- {item['name']}: {int(qty)}")
 
         # 返回按钮
         tk.Button(self.root, text="返回", command=self.show_calculation_page).pack(pady=10)
@@ -660,3 +715,53 @@ class BOMGUI:
             filtered = [p for p in self.products_data if keyword.lower() in p['name'].lower()]
             for product in filtered:
                 listbox.insert(tk.END, product['name'])
+
+
+if __name__ == '__main__':
+
+    with open(f'{save_path}/base/index.json') as f:
+        base_data = json.load(f)
+    with open(f'{save_path}/materials/index.json') as f:
+        materials_data = json.load(f)
+    with open(f'{save_path}/products/index.json') as f:
+        products_data = json.load(f)
+    calculator = BOMCalculator(base_data, materials_data, products_data)
+    # 计算需求（修改后的逻辑）
+    all_requirements = defaultdict(float)  # 存储所有层级的需求
+    selected_recipes = [('盐烤公主鳟', 1), ('煎饼', 1), ('羊奶煮粥', 1)]
+    for name, qty in selected_recipes:
+        # 查找配方
+        product = next((p for p in products_data if p['name'] == name), None)
+        if product is None:
+            messagebox.showerror("错误", f"找不到配方: {name}")
+            continue
+        print(product)
+        # 获取配方的输出数量（默认为1）
+        output_qty = product.get('output', 1)
+
+        # 计算需要生产的批次（向上取整）
+        batches = math.ceil(qty / output_qty) * output_qty
+
+
+        # 递归计算所有层级的需求
+        def calculate_all_requirements(product_id, _quantity, level=0):
+            # 获取当前产品/材料的需求
+            reqs = calculator.calculate_requirements_by_id('product', product_id, _quantity)
+
+            # 记录当前产品的需求
+            all_requirements[(product_id, 'product')] += _quantity
+
+            # 递归处理每个需求
+            for req_id, req_qty in reqs.items():
+                # 检查这个需求是材料还是基础材料
+                if next((m for m in materials_data if m['id'] == req_id), None):
+                    # 这是一个材料（半成品）
+                    all_requirements[(req_id, 'material')] += req_qty
+                    calculate_all_requirements(req_id, req_qty, level + 1)
+                elif next((b for b in base_data if b['id'] == req_id), None):
+                    # 这是一个基础材料
+                    all_requirements[(req_id, 'base')] += req_qty
+
+
+        # 开始递归计算
+        calculate_all_requirements(product['id'], batches)
