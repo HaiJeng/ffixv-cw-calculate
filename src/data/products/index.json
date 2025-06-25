@@ -1,0 +1,141 @@
+[
+  {
+    "id": 1,
+    "name": "葡萄干",
+    "requirements": [
+      {
+        "base_id": 5,
+        "quantity": 5
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "水煮蛋",
+    "requirements": [
+      {
+        "base_id": 6,
+        "quantity": 3
+      },
+      {
+        "base_id": 7,
+        "quantity": 4
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "羊奶煮粥",
+    "requirements": [
+      {
+        "base_id": 17,
+        "quantity": 2
+      },
+      {
+        "base_id": 5,
+        "quantity": 1
+      },
+      {
+        "material_id": 5,
+        "quantity": 1
+      },
+      {
+        "base_id": 8,
+        "quantity": 2
+      },
+      {
+        "base_id": 9,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "煎饼",
+    "requirements": [
+      {
+        "material_id": 4,
+        "quantity": 1
+      },
+      {
+        "material_id": 1,
+        "quantity": 1
+      },
+      {
+        "base_id": 7,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "栗鼠肉排",
+    "requirements": [
+      {
+        "base_id": 10,
+        "quantity": 3
+      },
+      {
+        "base_id": 11,
+        "quantity": 1
+      },
+      {
+        "base_id": 12,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "盐烤公主鳟",
+    "output": 3,
+    "requirements": [
+      {
+        "base_id": 13,
+        "quantity": 3
+      },
+      {
+        "material_id": 1,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "橙汁",
+    "output": 3,
+    "requirements": [
+      {
+        "base_id": 14,
+        "quantity": 8
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "绿树蟾蜍腿",
+    "output": 3,
+    "requirements": [
+      {
+        "base_id": 15,
+        "quantity": 2
+      },
+      {
+        "base_id": 16,
+        "quantity": 1
+      },
+      {
+        "base_id": 9,
+        "quantity": 1
+      },
+      {
+        "material_id": 1,
+        "quantity": 1
+      },
+      {
+        "base_id": 12,
+        "quantity": 1
+      }
+    ]
+  }
+]

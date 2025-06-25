@@ -1,0 +1,75 @@
+[
+  {
+    "id": 1,
+    "name": "食盐",
+    "requirements": [
+      {
+        "base_id": 1,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "枫糖浆",
+    "requirements": [
+      {
+        "base_id": 2,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "枫糖",
+    "type": "level2",
+    "requirements": [
+      {
+        "material_id": 2,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "黑麦粉",
+    "requirements": [
+      {
+        "base_id": 3,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "蜂蜜",
+    "requirements": [
+      {
+        "base_id": 4,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "奶油",
+    "output": 1,
+    "requirements": [
+      {
+        "base_id": 18,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "黄油",
+    "output": 1,
+    "requirements": [
+      {
+        "base_id": 18,
+        "quantity": 2
+      }
+    ]
+  }
+]
