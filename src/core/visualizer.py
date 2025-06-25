@@ -23,7 +23,7 @@ class BOMGUI:
         self.calculator = BOMCalculator(self.base_data, self.materials_data, self.products_data)
         self.generator = BOMGenerator(self.base_data, self.materials_data, self.products_data)
         self.result_window = None
-        self.recipe_tree_window  = None
+        self.recipe_tree_window = None
 
         self.create_homepage()
 
@@ -360,6 +360,9 @@ class BOMGUI:
             command=self.recipe_tree_window.destroy
         ).pack(pady=10)
 
+    # TODO 1. 配方添加半成品时,应展示半成品下的材料
+    # TODO 2. 只能在根部添加材料
+    # TODO 3. 可以添加半成品配方
     def show_add_recipe_page(self):
         # 清除当前界面
         for widget in self.root.winfo_children():
