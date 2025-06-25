@@ -22,6 +22,8 @@ class BOMGUI:
             self.products_data = json.load(f)
         self.calculator = BOMCalculator(self.base_data, self.materials_data, self.products_data)
         self.generator = BOMGenerator(self.base_data, self.materials_data, self.products_data)
+        self.result_window = None
+        self.recipe_tree_window  = None
 
         self.create_homepage()
 
@@ -197,13 +199,15 @@ class BOMGUI:
 
     def show_calculation_result(self, all_requirements):
         # 清除当前界面
-        for widget in self.root.winfo_children():
-            widget.destroy()
+        if self.result_window and self.result_window.winfo_exists():
+            self.result_window.destroy()
+        # 创建新的结果窗口
+        self.result_window = tk.Toplevel(self.root)
+        self.result_window.title("计算结果")
+        self.result_window.geometry("800x600")
+        self.result_window.transient(self.root)  # 设置为主窗口的子窗口
 
-        # 创建结果显示
-        tk.Label(self.root, text="计算结果").pack(pady=10)
-
-        result_frame = tk.Frame(self.root)
+        result_frame = tk.Frame(self.result_window)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         # 创建三个列的框架
@@ -254,16 +258,25 @@ class BOMGUI:
                 if item:
                     raw_materials_listbox.insert(tk.END, f"- {item['name']}: {int(qty)}")
 
-        # 返回按钮
-        tk.Button(self.root, text="返回", command=self.show_calculation_page).pack(pady=10)
+        # 返回按钮：关闭结果窗口，不销毁主界面
+        tk.Button(
+            self.result_window,
+            text="返回",
+            command=self.result_window.destroy
+        ).pack(pady=10)
 
-    def show_recipe_tree(self, recipe_name, return_callback=None):
+    def show_recipe_tree(self, recipe_name):
         # 清除当前界面
-        for widget in self.root.winfo_children():
-            widget.destroy()
+        if self.recipe_tree_window and self.recipe_tree_window.winfo_exists():
+            self.recipe_tree_window.destroy()
+        # 创建新的结果窗口
+        self.recipe_tree_window = tk.Toplevel(self.root)
+        self.recipe_tree_window.title(f"{recipe_name}配方树")
+        self.recipe_tree_window.geometry("800x600")
+        self.recipe_tree_window.transient(self.root)  # 设置为主窗口的子窗口
 
         # 创建 Treeview 组件
-        tree = ttk.Treeview(self.root, columns=("quantity", "type"))
+        tree = ttk.Treeview(self.recipe_tree_window, columns=("quantity", "type"))
         tree.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         # 设置列标题
@@ -340,9 +353,12 @@ class BOMGUI:
         # 开始构建树
         build_tree(root_node, product['id'], 'product', 1)
 
-        # 返回按钮
-        return_command = return_callback if return_callback else self.show_calculation_page
-        tk.Button(self.root, text="返回", command=return_command).pack(pady=10)
+        # 返回按钮：关闭结果窗口，不销毁主界面
+        tk.Button(
+            self.recipe_tree_window,
+            text="返回",
+            command=self.recipe_tree_window.destroy
+        ).pack(pady=10)
 
     def show_add_recipe_page(self):
         # 清除当前界面
@@ -664,7 +680,7 @@ class BOMGUI:
                 return
 
             recipe_name = recipe_listbox.get(selection[0])
-            self.show_recipe_tree(recipe_name, self.show_delete_recipe_page)  # 指定返回删除页面
+            self.show_recipe_tree(recipe_name)  # 指定返回删除页面
 
         tk.Button(button_frame, text="查看配方", command=view_selected_recipe).pack(side=tk.LEFT, padx=5)
 
