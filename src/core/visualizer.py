@@ -14,11 +14,11 @@ class BOMGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("BOM Calculator and Generator")
-        with open(f'{save_path}/base/index.json',encoding='UTF-8') as f:
+        with open(f'{save_path}/base/index.json', encoding='UTF-8') as f:
             self.base_data = json.load(f)
-        with open(f'{save_path}/materials/index.json',encoding='UTF-8') as f:
+        with open(f'{save_path}/materials/index.json', encoding='UTF-8') as f:
             self.materials_data = json.load(f)
-        with open(f'{save_path}/products/index.json',encoding='UTF-8') as f:
+        with open(f'{save_path}/products/index.json', encoding='UTF-8') as f:
             self.products_data = json.load(f)
         self.calculator = BOMCalculator(self.base_data, self.materials_data, self.products_data)
         self.generator = BOMGenerator(self.base_data, self.materials_data, self.products_data)
@@ -428,9 +428,7 @@ class BOMGUI:
                 }
                 self.base_data.append(new_base)
 
-                # 保存到文件
-                with open(f'{save_path}/base/index.json', 'w',encoding='UTF-8') as f:
-                    json.dump(self.base_data, f, indent=2, ensure_ascii=False)
+                self.save_base()
 
                 # 更新材料列表
                 self.filter_materials(material_search_entry.get(), material_type_var.get(), material_listbox)
@@ -549,8 +547,7 @@ class BOMGUI:
                 self.materials_data.append(new_material)
 
                 # 保存到文件
-                with open(f'{save_path}/materials/index.json', 'w',encoding='UTF-8') as f:
-                    json.dump(self.materials_data, f, indent=2, ensure_ascii=False)
+                self.save_material()
 
                 # 更新材料列表
                 self.filter_materials(material_search_entry.get(), material_type_var.get(), material_listbox)
@@ -694,6 +691,7 @@ class BOMGUI:
                 # 如果是半成品，递归添加其需求
                 if req_item_type == "半成品" and req_data:
                     add_material_requirements(child_node, req_data)
+
         # 设置数量按钮
         def set_quantity():
             selected_item = recipe_tree.selection()
@@ -779,8 +777,7 @@ class BOMGUI:
                 "requirements": requirements
             }
             self.products_data.append(new_recipe)
-            with open(f'{save_path}/products/index.json', 'w',encoding='UTF-8') as f:
-                json.dump(self.products_data, f, indent=2, ensure_ascii=False)
+            self.save_product()
 
             # 检查是否有新的原材料或半成品需要添加
             new_base_materials = []
@@ -829,14 +826,12 @@ class BOMGUI:
             # 添加新的原材料到 base_data
             for new_base in new_base_materials:
                 self.base_data.append(new_base)
-            with open(f'{save_path}/base/index.json', 'w',encoding='UTF-8') as f:
-                json.dump(self.base_data, f, indent=2, ensure_ascii=False)
+            self.save_base()
 
             # 添加新的半成品到 materials_data
             for new_material in new_materials:
                 self.materials_data.append(new_material)
-            with open(f'{save_path}/materials/index.json', 'w',encoding='UTF-8') as f:
-                json.dump(self.materials_data, f, indent=2, ensure_ascii=False)
+            self.save_material()
 
             tk.messagebox.showinfo("成功", f"配方 {recipe_name} 已保存")
             self.show_add_recipe_page()
@@ -966,8 +961,7 @@ class BOMGUI:
 
                 # 保存到文件
                 try:
-                    with open(f'{save_path}/products/index.json', 'w',encoding='UTF-8') as f:
-                        json.dump(self.products_data, f, indent=2, ensure_ascii=False)
+                    self.save_product()
                     messagebox.showinfo("成功", f"配方 '{recipe_name}' 已删除")
                 except Exception as e:
                     messagebox.showerror("错误", f"保存失败: {str(e)}")
@@ -992,4 +986,14 @@ class BOMGUI:
             for product in filtered:
                 listbox.insert(tk.END, product['name'])
 
+    def save_base(self):
+        with open(f'{save_path}/base/index.json', 'w', encoding='UTF-8') as f:
+            json.dump(self.base_data, f, indent=2, ensure_ascii=False)
 
+    def save_material(self):
+        with open(f'{save_path}/materials/index.json', 'w', encoding='UTF-8') as f:
+            json.dump(self.materials_data, f, indent=2, ensure_ascii=False)
+
+    def save_product(self):
+        with open(f'{save_path}/products/index.json', 'w', encoding='UTF-8') as f:
+            json.dump(self.products_data, f, indent=2, ensure_ascii=False)
