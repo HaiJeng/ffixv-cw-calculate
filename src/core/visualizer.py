@@ -14,11 +14,11 @@ class BOMGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("BOM Calculator and Generator")
-        with open(f'{save_path}/base/index.json') as f:
+        with open(f'{save_path}/base/index.json',encoding='UTF-8') as f:
             self.base_data = json.load(f)
-        with open(f'{save_path}/materials/index.json') as f:
+        with open(f'{save_path}/materials/index.json',encoding='UTF-8') as f:
             self.materials_data = json.load(f)
-        with open(f'{save_path}/products/index.json') as f:
+        with open(f'{save_path}/products/index.json',encoding='UTF-8') as f:
             self.products_data = json.load(f)
         self.calculator = BOMCalculator(self.base_data, self.materials_data, self.products_data)
         self.generator = BOMGenerator(self.base_data, self.materials_data, self.products_data)
@@ -394,6 +394,174 @@ class BOMGUI:
 
         tk.Label(left_frame, text="可用材料").pack(anchor=tk.W)
 
+        # 材料操作按钮
+        button_frame = tk.Frame(left_frame)
+        button_frame.pack(fill=tk.X, pady=5)
+
+        def create_new_base_material():
+            dialog = tk.Toplevel(self.root)
+            dialog.title("创建新原材料")
+            dialog.geometry("300x150")
+            dialog.transient(self.root)
+            dialog.grab_set()
+
+            tk.Label(dialog, text="原材料名称:").pack(pady=10)
+            name_entry = tk.Entry(dialog)
+            name_entry.pack(pady=5)
+
+            def save_new_base():
+                name = name_entry.get().strip()
+                if not name:
+                    tk.messagebox.showerror("错误", "请输入名称")
+                    return
+
+                # 检查是否已存在
+                if any(b['name'] == name for b in self.base_data):
+                    tk.messagebox.showerror("错误", f"原材料 '{name}' 已存在")
+                    return
+
+                # 创建新原材料
+                new_id = max((b['id'] for b in self.base_data), default=0) + 1
+                new_base = {
+                    "id": new_id,
+                    "name": name
+                }
+                self.base_data.append(new_base)
+
+                # 保存到文件
+                with open(f'{save_path}/base/index.json', 'w',encoding='UTF-8') as f:
+                    json.dump(self.base_data, f, indent=2, ensure_ascii=False)
+
+                # 更新材料列表
+                self.filter_materials(material_search_entry.get(), material_type_var.get(), material_listbox)
+
+                dialog.destroy()
+                tk.messagebox.showinfo("成功", f"原材料 '{name}' 已创建")
+
+            tk.Button(dialog, text="创建", command=save_new_base).pack(pady=10)
+
+        tk.Button(button_frame, text="创建原材料", command=create_new_base_material).pack(side=tk.LEFT, padx=5)
+
+        def create_new_material():
+            dialog = tk.Toplevel(self.root)
+            dialog.title("创建新半成品")
+            dialog.geometry("300x200")
+            dialog.transient(self.root)
+            dialog.grab_set()
+
+            tk.Label(dialog, text="半成品名称:").pack(pady=10)
+            name_entry = tk.Entry(dialog)
+            name_entry.pack(pady=5)
+
+            tk.Label(dialog, text="所需原材料:").pack(pady=10)
+            material_listbox = tk.Listbox(dialog, height=3)
+            material_listbox.pack(fill=tk.X, padx=10)
+
+            # 填充原材料列表
+            for base in self.base_data:
+                material_listbox.insert(tk.END, base['name'])
+
+            tk.Label(dialog, text="数量:").pack(pady=5)
+            quantity_entry = tk.Entry(dialog)
+            quantity_entry.insert(0, "1")
+            quantity_entry.pack(pady=5)
+
+            requirements = []
+            requirements_frame = tk.Frame(dialog)
+            requirements_frame.pack(fill=tk.X, padx=10, pady=5)
+
+            def add_requirement():
+                selected = material_listbox.curselection()
+                if not selected:
+                    tk.messagebox.showinfo("提示", "请选择原材料")
+                    return
+
+                try:
+                    quantity = int(quantity_entry.get())
+                    if quantity <= 0:
+                        raise ValueError
+                except ValueError:
+                    tk.messagebox.showerror("错误", "请输入有效的数量")
+                    return
+
+                material_name = material_listbox.get(selected[0])
+                material_id = next(b['id'] for b in self.base_data if b['name'] == material_name)
+
+                # 检查是否已添加
+                if any(req['base_id'] == material_id for req in requirements):
+                    tk.messagebox.showerror("错误", f"原材料 '{material_name}' 已添加")
+                    return
+
+                requirements.append({"base_id": material_id, "quantity": quantity})
+
+                # 更新显示
+                update_requirements_display()
+
+            def update_requirements_display():
+                # 清除现有显示
+                for widget in requirements_frame.winfo_children():
+                    widget.destroy()
+
+                # 创建新的显示
+                for i, req in enumerate(requirements):
+                    base = next(b for b in self.base_data if b['id'] == req['base_id'])
+                    tk.Label(requirements_frame, text=f"{base['name']} x {req['quantity']}").grid(row=i, column=0)
+
+                    # 使用函数闭包正确绑定索引
+                    def create_delete_callback(index):
+                        return lambda: delete_requirement(index)
+
+                    tk.Button(requirements_frame, text="删除",
+                              command=create_delete_callback(i)).grid(row=i, column=1)
+
+            def delete_requirement(index):
+                # 确保索引有效
+                if 0 <= index < len(requirements):
+                    requirements.pop(index)
+                    update_requirements_display()
+                else:
+                    tk.messagebox.showerror("错误", "删除索引超出范围")
+
+            tk.Button(dialog, text="添加材料", command=add_requirement).pack(pady=5)
+
+            def save_new_material():
+                name = name_entry.get().strip()
+                if not name:
+                    tk.messagebox.showerror("错误", "请输入名称")
+                    return
+
+                # 检查是否已存在
+                if any(m['name'] == name for m in self.materials_data):
+                    tk.messagebox.showerror("错误", f"半成品 '{name}' 已存在")
+                    return
+
+                if not requirements:
+                    tk.messagebox.showerror("错误", "半成品至少需要一个原材料")
+                    return
+
+                # 创建新半成品
+                new_id = max((m['id'] for m in self.materials_data), default=0) + 1
+                new_material = {
+                    "id": new_id,
+                    "name": name,
+                    "requirements": requirements
+                }
+                self.materials_data.append(new_material)
+
+                # 保存到文件
+                with open(f'{save_path}/materials/index.json', 'w',encoding='UTF-8') as f:
+                    json.dump(self.materials_data, f, indent=2, ensure_ascii=False)
+
+                # 更新材料列表
+                self.filter_materials(material_search_entry.get(), material_type_var.get(), material_listbox)
+
+                dialog.destroy()
+                tk.messagebox.showinfo("成功", f"半成品 '{name}' 已创建")
+
+            tk.Button(dialog, text="创建", command=save_new_material).pack(pady=10)
+
+        tk.Button(button_frame, text="创建半成品", command=create_new_material).pack(side=tk.LEFT, padx=5)
+
         # 创建材料类型选择
         material_type_var = tk.StringVar(value="all")
         material_type_frame = tk.Frame(left_frame)
@@ -456,12 +624,6 @@ class BOMGUI:
                 tk.messagebox.showinfo("提示", "请先选择材料")
                 return
 
-            selected_item = recipe_tree.selection()
-            if not selected_item:
-                parent = recipe_root
-            else:
-                parent = selected_item[0]
-
             for i in selected_materials:
                 material_name = material_listbox.get(i)
                 material_id = None
@@ -471,23 +633,67 @@ class BOMGUI:
                 material = next((m for m in self.materials_data if m['name'] == material_name), None)
                 if material:
                     material_id = material['id']
-                    material_type = "材料"
+                    material_type = "半成品"
                 else:
                     material = next((b for b in self.base_data if b['name'] == material_name), None)
                     if material:
                         material_id = material['id']
-                        material_type = "半成品"
+                        material_type = "材料"
+                    else:
+                        material = next((p for p in self.products_data if p['name'] == material_name), None)
+                        if material:
+                            material_id = material['id']
+                            material_type = "成品"
 
                 if material_id:
-                    recipe_tree.insert(
-                        parent, "end",
+                    new_node = recipe_tree.insert(
+                        recipe_root, "end",
                         text=material_name,
                         values=("1", material_type),
                         tags=(f"{material_type}_{material_id}",)
                     )
+                    if material_type == "半成品":
+                        add_material_requirements(new_node, material)
 
         tk.Button(button_frame, text="添加到配方", command=add_material_to_recipe).pack(side=tk.LEFT, padx=5)
 
+        def add_material_requirements(parent_node, material):
+            """递归添加材料的所有层级需求"""
+            requirements = material.get('requirements', [])
+
+            for req in requirements:
+                req_type = '半成品' if 'material_id' in req else '材料'
+                req_id = req.get('material_id', req.get('base_id'))
+                req_qty = req['quantity']
+
+                req_name = ""
+                req_item_type = ""
+                req_data = None
+
+                if req_type == '半成品':
+                    req_data = next((m for m in self.materials_data if m['id'] == req_id), None)
+                    if req_data:
+                        req_name = req_data['name']
+                        req_item_type = "半成品"
+                else:  # 材料
+                    req_data = next((b for b in self.base_data if b['id'] == req_id), None)
+                    if req_data:
+                        req_name = req_data['name']
+                        req_item_type = "材料"
+
+                if not req_name:
+                    req_name = f"未知材料(ID:{req_id})"
+
+                child_node = recipe_tree.insert(
+                    parent_node, "end",
+                    text=req_name,
+                    values=(req_qty, req_item_type),
+                    tags=(f"{req_item_type}_{req_id}",)
+                )
+
+                # 如果是半成品，递归添加其需求
+                if req_item_type == "半成品" and req_data:
+                    add_material_requirements(child_node, req_data)
         # 设置数量按钮
         def set_quantity():
             selected_item = recipe_tree.selection()
@@ -563,7 +769,8 @@ class BOMGUI:
                 tk.messagebox.showerror("错误", "配方至少需要一个材料")
                 return
 
-            # 创建新配方
+            # 判断配方类型并保存到相应的列表
+            # 这里假设根节点代表成品配方
             new_id = max((p['id'] for p in self.products_data), default=0) + 1
             new_recipe = {
                 "id": new_id,
@@ -571,18 +778,68 @@ class BOMGUI:
                 "output": output_qty,
                 "requirements": requirements
             }
-
-            # 添加到成品列表
             self.products_data.append(new_recipe)
+            with open(f'{save_path}/products/index.json', 'w',encoding='UTF-8') as f:
+                json.dump(self.products_data, f, indent=2, ensure_ascii=False)
 
-            # 保存到文件
-            try:
-                with open(f'{save_path}/products/index.json', 'w') as f:
-                    json.dump(self.products_data, f, indent=2, ensure_ascii=False)
-                tk.messagebox.showinfo("成功", f"配方 {recipe_name} 已保存")
-                self.show_add_recipe_page()
-            except Exception as e:
-                tk.messagebox.showerror("错误", f"保存失败: {str(e)}")
+            # 检查是否有新的原材料或半成品需要添加
+            new_base_materials = []
+            new_materials = []
+
+            def check_new_materials(node_id):
+                item = recipe_tree.item(node_id)
+                tags = item['tags']
+                if not tags:
+                    return
+
+                tag = tags[0]
+                parts = tag.split('_')
+                if len(parts) != 2:
+                    return
+
+                material_type, material_id = parts[0], int(parts[1])
+                material_name = item['text']
+
+                if material_type == "材料":
+                    existing_material = next((m for m in self.materials_data if m['id'] == material_id), None)
+                    if not existing_material:
+                        new_material = {
+                            "id": material_id,
+                            "name": material_name,
+                            "requirements": []
+                        }
+                        new_materials.append(new_material)
+                elif material_type == "半成品":
+                    existing_base = next((b for b in self.base_data if b['id'] == material_id), None)
+                    if not existing_base:
+                        new_base = {
+                            "id": material_id,
+                            "name": material_name,
+                            "requirements": []
+                        }
+                        new_base_materials.append(new_base)
+
+                children = recipe_tree.get_children(node_id)
+                for child_id in children:
+                    check_new_materials(child_id)
+
+            for child_id in recipe_tree.get_children(recipe_root):
+                check_new_materials(child_id)
+
+            # 添加新的原材料到 base_data
+            for new_base in new_base_materials:
+                self.base_data.append(new_base)
+            with open(f'{save_path}/base/index.json', 'w',encoding='UTF-8') as f:
+                json.dump(self.base_data, f, indent=2, ensure_ascii=False)
+
+            # 添加新的半成品到 materials_data
+            for new_material in new_materials:
+                self.materials_data.append(new_material)
+            with open(f'{save_path}/materials/index.json', 'w',encoding='UTF-8') as f:
+                json.dump(self.materials_data, f, indent=2, ensure_ascii=False)
+
+            tk.messagebox.showinfo("成功", f"配方 {recipe_name} 已保存")
+            self.show_add_recipe_page()
 
         # 递归构建配方需求
         def build_requirements(node_id):
@@ -599,7 +856,7 @@ class BOMGUI:
             material_type, material_id = parts[0], int(parts[1])
             quantity = int(item['values'][0])
 
-            req_key = "material_id" if material_type == "material" else "base_id"
+            req_key = "material_id" if material_type == "材料" else "base_id"
             requirement = {req_key: material_id, "quantity": quantity}
 
             # 处理子节点
@@ -709,7 +966,7 @@ class BOMGUI:
 
                 # 保存到文件
                 try:
-                    with open(f'{save_path}/products/index.json', 'w') as f:
+                    with open(f'{save_path}/products/index.json', 'w',encoding='UTF-8') as f:
                         json.dump(self.products_data, f, indent=2, ensure_ascii=False)
                     messagebox.showinfo("成功", f"配方 '{recipe_name}' 已删除")
                 except Exception as e:
@@ -736,51 +993,3 @@ class BOMGUI:
                 listbox.insert(tk.END, product['name'])
 
 
-if __name__ == '__main__':
-
-    with open(f'{save_path}/base/index.json') as f:
-        base_data = json.load(f)
-    with open(f'{save_path}/materials/index.json') as f:
-        materials_data = json.load(f)
-    with open(f'{save_path}/products/index.json') as f:
-        products_data = json.load(f)
-    calculator = BOMCalculator(base_data, materials_data, products_data)
-    # 计算需求（修改后的逻辑）
-    all_requirements = defaultdict(float)  # 存储所有层级的需求
-    selected_recipes = [('盐烤公主鳟', 1), ('煎饼', 1), ('羊奶煮粥', 1)]
-    for name, qty in selected_recipes:
-        # 查找配方
-        product = next((p for p in products_data if p['name'] == name), None)
-        if product is None:
-            messagebox.showerror("错误", f"找不到配方: {name}")
-            continue
-        print(product)
-        # 获取配方的输出数量（默认为1）
-        output_qty = product.get('output', 1)
-
-        # 计算需要生产的批次（向上取整）
-        batches = math.ceil(qty / output_qty) * output_qty
-
-
-        # 递归计算所有层级的需求
-        def calculate_all_requirements(product_id, _quantity, level=0):
-            # 获取当前产品/材料的需求
-            reqs = calculator.calculate_requirements_by_id('product', product_id, _quantity)
-
-            # 记录当前产品的需求
-            all_requirements[(product_id, 'product')] += _quantity
-
-            # 递归处理每个需求
-            for req_id, req_qty in reqs.items():
-                # 检查这个需求是材料还是基础材料
-                if next((m for m in materials_data if m['id'] == req_id), None):
-                    # 这是一个材料（半成品）
-                    all_requirements[(req_id, 'material')] += req_qty
-                    calculate_all_requirements(req_id, req_qty, level + 1)
-                elif next((b for b in base_data if b['id'] == req_id), None):
-                    # 这是一个基础材料
-                    all_requirements[(req_id, 'base')] += req_qty
-
-
-        # 开始递归计算
-        calculate_all_requirements(product['id'], batches)

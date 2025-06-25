@@ -114,11 +114,11 @@ class BOMGenerator:
         return normalized
 
     def save(self):
-        with open(f'{save_path}/base/index.json', 'w') as f:
+        with open(f'{save_path}/base/index.json', 'w',encoding='UTF-8') as f:
             json.dump(self.base_template, f, indent=2, ensure_ascii=False)
-        with open(f'{save_path}/materials/index.json', 'w') as f:
+        with open(f'{save_path}/materials/index.json', 'w',encoding='UTF-8') as f:
             json.dump(self.materials_template, f, indent=2, ensure_ascii=False)
-        with open(f'{save_path}/products/index.json', 'w') as f:
+        with open(f'{save_path}/products/index.json', 'w',encoding='UTF-8') as f:
             json.dump(self.products_template, f, indent=2, ensure_ascii=False)
 
     def save_to_file(self, filepath):
@@ -127,9 +127,9 @@ class BOMGenerator:
         mkdir(f"{filepath}/materials")
         mkdir(f"{filepath}/products")
         """保存到JSON文件"""
-        with open(f"{filepath}/base/index.json", 'w') as f:
+        with open(f"{filepath}/base/index.json", 'w',encoding='UTF-8') as f:
             json.dump(self.base_template, f, indent=2, ensure_ascii=False)
-        with open(f"{filepath}/materials/index.json", 'w') as f:
+        with open(f"{filepath}/materials/index.json", 'w',encoding='UTF-8') as f:
             json.dump(self.materials_template, f, indent=2, ensure_ascii=False)
-        with open(f"{filepath}/products/index.json", 'w') as f:
+        with open(f"{filepath}/products/index.json", 'w',encoding='UTF-8') as f:
             json.dump(self.products_template, f, indent=2, ensure_ascii=False)
