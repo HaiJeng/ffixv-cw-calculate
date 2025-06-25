@@ -443,35 +443,77 @@ class BOMGUI:
         def create_new_material():
             dialog = tk.Toplevel(self.root)
             dialog.title("创建新半成品")
-            dialog.geometry("300x200")
+            dialog.resizable(True, True)  # 允许调整大小
             dialog.transient(self.root)
             dialog.grab_set()
 
-            tk.Label(dialog, text="半成品名称:").pack(pady=10)
-            name_entry = tk.Entry(dialog)
-            name_entry.pack(pady=5)
+            # 顶部：半成品名称
+            name_frame = tk.Frame(dialog)
+            name_frame.pack(fill=tk.X, padx=10, pady=10)
 
-            tk.Label(dialog, text="所需原材料:").pack(pady=10)
-            material_listbox = tk.Listbox(dialog, height=3)
-            material_listbox.pack(fill=tk.X, padx=10)
+            tk.Label(name_frame, text="半成品名称:").pack(side=tk.LEFT)
+            name_entry = tk.Entry(name_frame, width=30)
+            name_entry.pack(side=tk.LEFT, padx=5)
+
+            # 中部：材料选择区域
+            materials_frame = tk.Frame(dialog)
+            materials_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+            # 左侧：原材料列表
+            left_frame = tk.Frame(materials_frame)
+            left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+            tk.Label(left_frame, text="原材料").pack(anchor=tk.W)
+
+            # 原材料搜索框
+            base_search_var = tk.StringVar()
+            base_search_entry = tk.Entry(left_frame, textvariable=base_search_var)
+            base_search_entry.pack(fill=tk.X, pady=5)
+
+            # 原材料列表
+            base_listbox = tk.Listbox(left_frame, selectmode=tk.SINGLE)
+            base_listbox.pack(fill=tk.BOTH, expand=True)
 
             # 填充原材料列表
             for base in self.base_data:
-                material_listbox.insert(tk.END, base['name'])
+                base_listbox.insert(tk.END, base['name'])
 
-            tk.Label(dialog, text="数量:").pack(pady=5)
-            quantity_entry = tk.Entry(dialog)
+            # 右侧：半成品列表
+            right_frame = tk.Frame(materials_frame)
+            right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10)
+
+            tk.Label(right_frame, text="半成品").pack(anchor=tk.W)
+
+            # 半成品搜索框
+            material_search_var = tk.StringVar()
+            material_search_entry = tk.Entry(right_frame, textvariable=material_search_var)
+            material_search_entry.pack(fill=tk.X, pady=5)
+
+            # 半成品列表
+            material_listbox = tk.Listbox(right_frame, selectmode=tk.SINGLE)
+            material_listbox.pack(fill=tk.BOTH, expand=True)
+
+            # 填充半成品列表
+            for material in self.materials_data:
+                material_listbox.insert(tk.END, material['name'])
+
+            # 数量设置
+            quantity_frame = tk.Frame(dialog)
+            quantity_frame.pack(fill=tk.X, padx=10, pady=5)
+
+            tk.Label(quantity_frame, text="数量:").pack(side=tk.LEFT)
+            quantity_entry = tk.Entry(quantity_frame, width=5)
             quantity_entry.insert(0, "1")
-            quantity_entry.pack(pady=5)
+            quantity_entry.pack(side=tk.LEFT, padx=5)
 
-            requirements = []
-            requirements_frame = tk.Frame(dialog)
-            requirements_frame.pack(fill=tk.X, padx=10, pady=5)
+            # 添加按钮
+            def add_selected_material():
+                # 检查是否选择了材料
+                base_selected = base_listbox.curselection()
+                material_selected = material_listbox.curselection()
 
-            def add_requirement():
-                selected = material_listbox.curselection()
-                if not selected:
-                    tk.messagebox.showinfo("提示", "请选择原材料")
+                if not base_selected and not material_selected:
+                    tk.messagebox.showinfo("提示", "请选择原材料或半成品")
                     return
 
                 try:
@@ -482,46 +524,80 @@ class BOMGUI:
                     tk.messagebox.showerror("错误", "请输入有效的数量")
                     return
 
-                material_name = material_listbox.get(selected[0])
-                material_id = next(b['id'] for b in self.base_data if b['name'] == material_name)
+                # 获取选择的材料信息
+                if base_selected:
+                    material_name = base_listbox.get(base_selected[0])
+                    material_id = next(b['id'] for b in self.base_data if b['name'] == material_name)
+                    material_type = "原材料"
+                else:
+                    material_name = material_listbox.get(material_selected[0])
+                    material_id = next(m['id'] for m in self.materials_data if m['name'] == material_name)
+                    material_type = "半成品"
 
                 # 检查是否已添加
-                if any(req['base_id'] == material_id for req in requirements):
-                    tk.messagebox.showerror("错误", f"原材料 '{material_name}' 已添加")
+                if any(req.get('base_id') == material_id or req.get('material_id') == material_id for req in
+                       requirements):
+                    tk.messagebox.showerror("错误", f"{material_type} '{material_name}' 已添加")
                     return
 
-                requirements.append({"base_id": material_id, "quantity": quantity})
+                # 添加到需求列表
+                req_key = "base_id" if material_type == "原材料" else "material_id"
+                requirements.append({req_key: material_id, "quantity": quantity})
 
                 # 更新显示
                 update_requirements_display()
 
+            tk.Button(quantity_frame, text="添加到配方", command=add_selected_material).pack(side=tk.RIGHT)
+
+            # 已选材料显示
+            requirements_frame = tk.Frame(dialog)
+            requirements_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+            tk.Label(requirements_frame, text="已选材料").pack(anchor=tk.W)
+
+            # 已选材料列表
+            requirements_listbox = tk.Listbox(requirements_frame)
+            requirements_listbox.pack(fill=tk.BOTH, expand=True)
+
+            requirements = []
+
             def update_requirements_display():
-                # 清除现有显示
-                for widget in requirements_frame.winfo_children():
-                    widget.destroy()
-
-                # 创建新的显示
+                requirements_listbox.delete(0, tk.END)
                 for i, req in enumerate(requirements):
-                    base = next(b for b in self.base_data if b['id'] == req['base_id'])
-                    tk.Label(requirements_frame, text=f"{base['name']} x {req['quantity']}").grid(row=i, column=0)
+                    material_id = req.get('base_id', req.get('material_id'))
+                    material_type = "原材料" if 'base_id' in req else "半成品"
 
-                    # 使用函数闭包正确绑定索引
-                    def create_delete_callback(index):
-                        return lambda: delete_requirement(index)
+                    # 获取材料名称
+                    material_name = ""
+                    if material_type == "原材料":
+                        material = next((b for b in self.base_data if b['id'] == material_id), None)
+                    else:
+                        material = next((m for m in self.materials_data if m['id'] == material_id), None)
 
-                    tk.Button(requirements_frame, text="删除",
-                              command=create_delete_callback(i)).grid(row=i, column=1)
+                    if material:
+                        material_name = material['name']
+                    else:
+                        material_name = f"未知材料(ID:{material_id})"
 
-            def delete_requirement(index):
-                # 确保索引有效
-                if 0 <= index < len(requirements):
-                    requirements.pop(index)
-                    update_requirements_display()
-                else:
-                    tk.messagebox.showerror("错误", "删除索引超出范围")
+                    requirements_listbox.insert(tk.END, f"{material_name} x {req['quantity']}")
 
-            tk.Button(dialog, text="添加材料", command=add_requirement).pack(pady=5)
+            # 底部：操作按钮
+            button_frame = tk.Frame(dialog)
+            button_frame.pack(fill=tk.X, padx=10, pady=10)
 
+            # 删除选中的材料
+            def delete_selected_material():
+                selected = requirements_listbox.curselection()
+                if not selected:
+                    tk.messagebox.showinfo("提示", "请选择要删除的材料")
+                    return
+
+                requirements.pop(selected[0])
+                update_requirements_display()
+
+            tk.Button(button_frame, text="删除选中", command=delete_selected_material).pack(side=tk.LEFT)
+
+            # 保存半成品
             def save_new_material():
                 name = name_entry.get().strip()
                 if not name:
@@ -534,7 +610,7 @@ class BOMGUI:
                     return
 
                 if not requirements:
-                    tk.messagebox.showerror("错误", "半成品至少需要一个原材料")
+                    tk.messagebox.showerror("错误", "半成品至少需要一个原材料或半成品")
                     return
 
                 # 创建新半成品
@@ -555,7 +631,13 @@ class BOMGUI:
                 dialog.destroy()
                 tk.messagebox.showinfo("成功", f"半成品 '{name}' 已创建")
 
-            tk.Button(dialog, text="创建", command=save_new_material).pack(pady=10)
+            tk.Button(button_frame, text="保存", command=save_new_material).pack(side=tk.RIGHT)
+
+            # 调整对话框大小以适应内容
+            dialog.update_idletasks()
+            width = dialog.winfo_reqwidth() + 50
+            height = dialog.winfo_reqheight() + 50
+            dialog.geometry(f"{width}x{height}")
 
         tk.Button(button_frame, text="创建半成品", command=create_new_material).pack(side=tk.LEFT, padx=5)
 
