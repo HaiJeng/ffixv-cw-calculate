@@ -189,8 +189,8 @@ class BOMGUI:
         result_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.config(command=result_listbox.yview)
 
-        # 显示基础材料需求
-        result_listbox.insert(tk.END, "基础材料需求:")
+        # 显示原材料需求
+        result_listbox.insert(tk.END, "原材料需求:")
         for item_id, qty in requirements.items():
             # 查找材料名称
             item_name = next(
@@ -228,7 +228,7 @@ class BOMGUI:
             return
 
         # 创建根节点
-        root_node = tree.insert("", "end", text=recipe_name, values=(product.get('output', 1), "产品"))
+        root_node = tree.insert("", "end", text=recipe_name, values=(product.get('output', 1), "成品"))
 
         # 递归函数，用于构建树状结构
         def build_tree(parent_node, item_id, item_type, quantity):
@@ -266,7 +266,7 @@ class BOMGUI:
                     req_base = next((b for b in self.base_data if b['id'] == req_id), None)
                     if req_base:
                         req_name = req_base['name']
-                        req_item_type = "基础"
+                        req_item_type = "半成品"
 
                 if not req_name:
                     req_name = f"未知材料(ID:{req_id})"
@@ -278,7 +278,7 @@ class BOMGUI:
                     values=(req_qty, req_item_type)
                 )
 
-                # 如果该材料是产品或材料，继续递归构建子树
+                # 如果该材料是成品或材料，继续递归构建子树
                 if req_type == 'material':
                     build_tree(child_node, req_id, 'material', req_qty)
 
@@ -330,9 +330,9 @@ class BOMGUI:
 
         tk.Radiobutton(material_type_frame, text="所有", variable=material_type_var, value="all",
                        command=on_material_type_change).pack(side=tk.LEFT)
-        tk.Radiobutton(material_type_frame, text="基础材料", variable=material_type_var, value="base",
+        tk.Radiobutton(material_type_frame, text="原材料", variable=material_type_var, value="base",
                        command=on_material_type_change).pack(side=tk.LEFT)
-        tk.Radiobutton(material_type_frame, text="材料", variable=material_type_var, value="material",
+        tk.Radiobutton(material_type_frame, text="半成品", variable=material_type_var, value="material",
                        command=on_material_type_change).pack(side=tk.LEFT)
 
         # 创建材料搜索框
@@ -369,7 +369,7 @@ class BOMGUI:
         recipe_tree.column("type", width=80, anchor=tk.CENTER)
 
         # 创建根节点
-        recipe_root = recipe_tree.insert("", "end", text="新配方", values=("", "产品"))
+        recipe_root = recipe_tree.insert("", "end", text="新配方", values=("", "成品"))
 
         # 操作按钮
         button_frame = tk.Frame(self.root)
@@ -402,7 +402,7 @@ class BOMGUI:
                     material = next((b for b in self.base_data if b['name'] == material_name), None)
                     if material:
                         material_id = material['id']
-                        material_type = "基础"
+                        material_type = "半成品"
 
                 if material_id:
                     recipe_tree.insert(
@@ -498,7 +498,7 @@ class BOMGUI:
                 "requirements": requirements
             }
 
-            # 添加到产品列表
+            # 添加到成品列表
             self.products_data.append(new_recipe)
 
             # 保存到文件

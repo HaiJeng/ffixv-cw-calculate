@@ -46,7 +46,7 @@ class BOMGenerator:
         for item in self.materials_template:
             if item['name'] == name:
                 return item['id']
-        """添加中间材料"""
+        """添加半成品"""
         new_id = max([item['id'] for item in self.materials_template], default=0) + 1
         item = {
             "id": new_id,
@@ -68,7 +68,7 @@ class BOMGenerator:
         for item in self.materials_template:
             if item['name'] == name:
                 return item['id']
-        """添加中间材料"""
+        """添加半成品"""
         new_id = max([item['id'] for item in self.materials_template], default=0) + 1
         item = {
             "id": new_id,
