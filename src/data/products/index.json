@@ -156,5 +156,62 @@
         "quantity": 1
       }
     ]
+  },
+  {
+    "id": 10,
+    "name": "白钢锉刀",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 10,
+        "quantity": 1
+      },
+      {
+        "material_id": 9,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "白钢手钳",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 9,
+        "quantity": 1
+      },
+      {
+        "material_id": 23,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "白钢平斩",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 9,
+        "quantity": 1
+      },
+      {
+        "material_id": 23,
+        "quantity": 1
+      }
+    ]
   }
 ]

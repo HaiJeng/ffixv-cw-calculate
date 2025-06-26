@@ -67,24 +67,30 @@ class BOMGUI:
         for product in self.products_data:
             recipe_listbox.insert(tk.END, product['name'])
 
-        # 查看配方按钮
-        def view_selected_recipe(return_callback):
-            selection = recipe_listbox.curselection()
+        # 通用的查看配方函数
+        def view_selected_recipe(listbox, callback):
+            selection = listbox.curselection()
             if not selection:  # 检查是否有选中项
                 messagebox.showinfo("提示", "请先选择一个配方")
                 return
 
-            return_callback(recipe_listbox.get(selection))
+            callback(listbox.get(selection[0]))
 
         view_tree_button = tk.Button(self.root, text="查看配方树",
-                                     command=lambda: view_selected_recipe(self.show_recipe_tree)
+                                     command=lambda: view_selected_recipe(recipe_listbox, self.show_recipe_tree)
                                      )
         view_tree_button.pack(pady=10)
 
         add_recipe_button = tk.Button(self.root, text="添加到右侧列表",
-                                      command=lambda: view_selected_recipe(self.add_recipe_to_selection)
+                                      command=lambda: view_selected_recipe(recipe_listbox, self.add_recipe_to_selection)
                                       )
         add_recipe_button.pack(pady=10)
+
+        remove_recipe_button = tk.Button(self.root, text="从右侧列表移除",
+                                         command=lambda: view_selected_recipe(selection_listbox,
+                                                                              self.remove_selected_recipe)
+                                         )
+        remove_recipe_button.pack(pady=10)
 
         selection_frame = tk.Frame(self.root)
         selection_frame.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -92,6 +98,9 @@ class BOMGUI:
         selection_listbox = tk.Listbox(selection_frame, width=50)
         selection_listbox.pack(side=tk.LEFT)
 
+        # 为右侧列表添加双击事件，查看配方树
+        selection_listbox.bind("<Double-1>", lambda event: self.show_recipe_tree(
+            selection_listbox.get(selection_listbox.curselection())))
         calculate_button = tk.Button(selection_frame, text="计算",
                                      command=lambda: self.calculate_selected_recipes(selection_listbox))
         calculate_button.pack(side=tk.BOTTOM, pady=10)
@@ -114,6 +123,29 @@ class BOMGUI:
             for product in filtered:
                 self.recipe_listbox.insert(tk.END, product['name'])
 
+    # 添加移除按钮
+    def remove_selected_recipe(self, recipe_name):
+        # 检查是否已添加
+        if recipe_name in [self.recipe_listbox.get(i) for i in range(self.recipe_listbox.size())]:
+            messagebox.showinfo("提示", f"{recipe_name} 已添加")
+            return
+        # 在左侧列表添加配方
+        self.recipe_listbox.insert(tk.END, recipe_name)
+
+        # 清理数量输入框数据
+        if recipe_name in self.quantity_entries:
+            del self.quantity_entries[recipe_name]
+        for widget in self.root.winfo_children():
+            if widget.winfo_name() == f"{recipe_name}":
+                widget.destroy()
+                break
+
+        # 从右侧列表移除
+        for i in range(self.selection_listbox.size()):
+            if self.selection_listbox.get(i) == recipe_name:
+                self.selection_listbox.delete(i)
+                break
+
     def add_recipe_to_selection(self, recipe_name):
         # 检查是否已添加
         if recipe_name in [self.selection_listbox.get(i) for i in range(self.selection_listbox.size())]:
@@ -124,7 +156,7 @@ class BOMGUI:
         self.selection_listbox.insert(tk.END, recipe_name)
 
         # 创建数量输入框
-        qty_frame = tk.Frame(self.root)
+        qty_frame = tk.Frame(self.root, name=f"{recipe_name}")
         qty_frame.pack(fill=tk.X, padx=10)
 
         tk.Label(qty_frame, text=f"{recipe_name} 数量:").pack(side=tk.LEFT)
@@ -291,6 +323,8 @@ class BOMGUI:
 
         # 创建根节点
         root_node = tree.insert("", "end", text=recipe_name, values=(product.get('output', 1), "成品"))
+
+        tree.item(root_node, open=True)
 
         # 递归函数，用于构建树状结构
         def build_tree(parent_node, item_id, item_type, quantity):
@@ -869,7 +903,7 @@ class BOMGUI:
             self.save_product()
 
             tk.messagebox.showinfo("成功", f"配方 {recipe_name} 已保存")
-            self.show_add_recipe_page()
+            # self.show_add_recipe_page()
 
         # 递归构建配方需求
         def build_requirements(node_id):
