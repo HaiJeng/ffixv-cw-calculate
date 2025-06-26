@@ -202,10 +202,7 @@ class BOMGUI:
         if self.result_window and self.result_window.winfo_exists():
             self.result_window.destroy()
         # 创建新的结果窗口
-        self.result_window = tk.Toplevel(self.root)
-        self.result_window.title("计算结果")
-        self.result_window.geometry("800x600")
-        self.result_window.transient(self.root)  # 设置为主窗口的子窗口
+        self.result_window = self.create_centered_window("计算结果")
 
         result_frame = tk.Frame(self.result_window)
         result_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
@@ -270,10 +267,7 @@ class BOMGUI:
         if self.recipe_tree_window and self.recipe_tree_window.winfo_exists():
             self.recipe_tree_window.destroy()
         # 创建新的结果窗口
-        self.recipe_tree_window = tk.Toplevel(self.root)
-        self.recipe_tree_window.title(f"{recipe_name}配方树")
-        self.recipe_tree_window.geometry("800x600")
-        self.recipe_tree_window.transient(self.root)  # 设置为主窗口的子窗口
+        self.recipe_tree_window = self.create_centered_window(f"{recipe_name}配方树")
 
         # 创建 Treeview 组件
         tree = ttk.Treeview(self.recipe_tree_window, columns=("quantity", "type"))
@@ -360,9 +354,6 @@ class BOMGUI:
             command=self.recipe_tree_window.destroy
         ).pack(pady=10)
 
-    # TODO 1. 配方添加半成品时,应展示半成品下的材料
-    # TODO 2. 只能在根部添加材料
-    # TODO 3. 可以添加半成品配方
     def show_add_recipe_page(self):
         # 清除当前界面
         for widget in self.root.winfo_children():
@@ -399,11 +390,7 @@ class BOMGUI:
         button_frame.pack(fill=tk.X, pady=5)
 
         def create_new_base_material():
-            dialog = tk.Toplevel(self.root)
-            dialog.title("创建新原材料")
-            dialog.geometry("300x150")
-            dialog.transient(self.root)
-            dialog.grab_set()
+            dialog = self.create_centered_window("创建新原材料", 300, 150,True)
 
             tk.Label(dialog, text="原材料名称:").pack(pady=10)
             name_entry = tk.Entry(dialog)
@@ -441,11 +428,7 @@ class BOMGUI:
         tk.Button(button_frame, text="创建原材料", command=create_new_base_material).pack(side=tk.LEFT, padx=5)
 
         def create_new_material():
-            dialog = tk.Toplevel(self.root)
-            dialog.title("创建新半成品")
-            dialog.resizable(True, True)  # 允许调整大小
-            dialog.transient(self.root)
-            dialog.grab_set()
+            dialog=self.create_centered_window("创建新半成品", 300, 150,True)
 
             # 顶部：半成品名称
             name_frame = tk.Frame(dialog)
@@ -782,11 +765,7 @@ class BOMGUI:
                 return
 
             # 创建对话框
-            dialog = tk.Toplevel(self.root)
-            dialog.title("设置数量")
-            dialog.geometry("300x150")
-            dialog.transient(self.root)
-            dialog.grab_set()
+            dialog=self.create_centered_window("设置数量",300,150,True)
 
             tk.Label(dialog, text="数量:").pack(pady=20)
             quantity_entry = tk.Entry(dialog)
@@ -1079,3 +1058,30 @@ class BOMGUI:
     def save_product(self):
         with open(f'{save_path}/products/index.json', 'w', encoding='UTF-8') as f:
             json.dump(self.products_data, f, indent=2, ensure_ascii=False)
+
+    def create_centered_window(self, title="新窗口", width=800, height=600, modal=False, resizable=(True, True)):
+        """创建一个居中于主窗口的顶级窗口，可选择是否为模态对话框及是否可调整大小"""
+        # 获取主窗口位置和尺寸
+        x = self.root.winfo_x()
+        y = self.root.winfo_y()
+        root_width = self.root.winfo_width()
+        root_height = self.root.winfo_height()
+
+        # 计算新窗口的位置
+        new_x = x + (root_width - width) // 2
+        new_y = y + (root_height - height) // 2
+
+        # 创建并配置新窗口
+        window = tk.Toplevel(self.root)
+        window.title(title)
+        window.geometry(f"{width}x{height}+{new_x}+{new_y}")
+        window.transient(self.root)  # 设置为主窗口的子窗口
+
+        # 设置窗口是否可调整大小
+        window.resizable(resizable[0], resizable[1])
+
+        # 如果是模态对话框，添加 grab_set
+        if modal:
+            window.grab_set()
+
+        return window  # 返回新创建的窗口
