@@ -102,6 +102,7 @@ class BOMGUI:
         # 为右侧列表添加双击事件，查看配方树
         selection_listbox.bind("<Double-1>", lambda event: self.show_recipe_tree(
             selection_listbox.get(selection_listbox.curselection())))
+        print("selection_listbox",selection_listbox)
         calculate_button = tk.Button(selection_frame, text="计算",
                                      command=lambda: self.calculate_selected_recipes(selection_listbox))
         calculate_button.pack(side=tk.BOTTOM, pady=10)
@@ -968,7 +969,6 @@ class BOMGUI:
         type_var = tk.StringVar(value="product")  # 默认选择products
 
         # 类型选择按钮
-        tk.Radiobutton(type_frame, text="所有", variable=type_var, value="all").pack(side=tk.LEFT)
         tk.Radiobutton(type_frame, text="成品", variable=type_var, value="product").pack(side=tk.LEFT)
         tk.Radiobutton(type_frame, text="原材料", variable=type_var, value="base").pack(side=tk.LEFT)
         tk.Radiobutton(type_frame, text="半成品", variable=type_var, value="material").pack(side=tk.LEFT)
@@ -991,8 +991,6 @@ class BOMGUI:
             list_type = type_var.get()
 
             # 根据选择的类型获取对应数据
-            if list_type == 'all':
-                current_data = self.products_data + self.base_data + self.materials_data
             if list_type == "product":
                 current_data = self.products_data
             elif list_type == "material":
@@ -1071,27 +1069,30 @@ class BOMGUI:
             item_name = current_listbox.get(selection[0])
             item_type = type_var.get()
             confirm = messagebox.askyesno("确认删除",
-                                          f"确定要删除{item_type == 'products' and '配方' or '项目'} '{item_name}' 吗？")
+                                          f"确定要删除{item_type == 'product' and '配方' or '项目'} '{item_name}' 吗？")
 
             if confirm:
                 # 查找并删除项目
-                data_list = None
-                save_method = None
-
-                if item_type == "products":
+                if item_type == "product":
                     data_list = self.products_data
                     save_method = self.save_product
-                elif item_type == "materials":
+                elif item_type == "material":
                     data_list = self.materials_data
                     save_method = self.save_material
-                else:  # base
+                else:
                     data_list = self.base_data
                     save_method = self.save_base
-
+                print(item_type, data_list)
                 # 从数据中删除
                 for i, item in enumerate(data_list):
                     if item['name'] == item_name:
                         del data_list[i]
+                        if item_type == "product":
+                            self.products_data = data_list
+                        elif item_type == "material":
+                            self.materials_data = data_list
+                        else:
+                            self.base_data = data_list
                         break
 
                 # 从列表中删除

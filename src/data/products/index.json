@@ -158,44 +158,6 @@
     ]
   },
   {
-    "id": 10,
-    "name": "白钢锉刀",
-    "output": 1,
-    "requirements": [
-      {
-        "material_id": 8,
-        "quantity": 3
-      },
-      {
-        "material_id": 10,
-        "quantity": 1
-      },
-      {
-        "material_id": 9,
-        "quantity": 1
-      }
-    ]
-  },
-  {
-    "id": 11,
-    "name": "白钢手钳",
-    "output": 1,
-    "requirements": [
-      {
-        "material_id": 8,
-        "quantity": 3
-      },
-      {
-        "material_id": 9,
-        "quantity": 1
-      },
-      {
-        "material_id": 23,
-        "quantity": 1
-      }
-    ]
-  },
-  {
     "id": 12,
     "name": "白钢平斩",
     "output": 1,
@@ -210,6 +172,105 @@
       },
       {
         "material_id": 23,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "白钢羊角锤",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 9,
+        "quantity": 1
+      },
+      {
+        "material_id": 23,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "白钢手钳",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 88,
+        "quantity": 1
+      },
+      {
+        "material_id": 89,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "白钢碎石锤",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 88,
+        "quantity": 1
+      },
+      {
+        "material_id": 90,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "白钢镰刀",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 88,
+        "quantity": 1
+      },
+      {
+        "material_id": 10,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "白钢长刃斧",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 92,
+        "quantity": 1
+      },
+      {
+        "material_id": 91,
+        "quantity": 1
+      },
+      {
+        "material_id": 9,
         "quantity": 1
       }
     ]

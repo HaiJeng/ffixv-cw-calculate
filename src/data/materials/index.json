@@ -191,5 +191,15 @@
         "quantity": 1
       }
     ]
+  },
+  {
+    "id": 92,
+    "name": "黑铁锭",
+    "requirements": [
+      {
+        "base_id": 20,
+        "quantity": 2
+      }
+    ]
   }
 ]
