@@ -323,12 +323,12 @@ class BOMGUI:
                     req_material = next((m for m in self.materials_data if m['id'] == req_id), None)
                     if req_material:
                         req_name = req_material['name']
-                        req_item_type = "材料"
+                        req_item_type = "半成品"
                 else:  # base
                     req_base = next((b for b in self.base_data if b['id'] == req_id), None)
                     if req_base:
                         req_name = req_base['name']
-                        req_item_type = "半成品"
+                        req_item_type = "原材料"
 
                 if not req_name:
                     req_name = f"未知材料(ID:{req_id})"
@@ -460,9 +460,8 @@ class BOMGUI:
             base_listbox = tk.Listbox(left_frame, selectmode=tk.SINGLE)
             base_listbox.pack(fill=tk.BOTH, expand=True)
 
-            # 填充原材料列表
-            for base in self.base_data:
-                base_listbox.insert(tk.END, base['name'])
+            # 原始原材料数据（用于筛选）
+            original_base_data = [base['name'] for base in self.base_data]
 
             # 右侧：半成品列表
             right_frame = tk.Frame(materials_frame)
@@ -479,9 +478,8 @@ class BOMGUI:
             material_listbox = tk.Listbox(right_frame, selectmode=tk.SINGLE)
             material_listbox.pack(fill=tk.BOTH, expand=True)
 
-            # 填充半成品列表
-            for material in self.materials_data:
-                material_listbox.insert(tk.END, material['name'])
+            # 原始半成品数据（用于筛选）
+            original_material_data = [material['name'] for material in self.materials_data]
 
             # 数量设置
             quantity_frame = tk.Frame(dialog)
@@ -491,6 +489,30 @@ class BOMGUI:
             quantity_entry = tk.Entry(quantity_frame, width=5)
             quantity_entry.insert(0, "1")
             quantity_entry.pack(side=tk.LEFT, padx=5)
+
+            # 筛选原材料列表
+            def filter_base_listbox():
+                search_text = base_search_var.get().lower()
+                base_listbox.delete(0, tk.END)
+                for name in original_base_data:
+                    if search_text in name.lower():
+                        base_listbox.insert(tk.END, name)
+
+            # 筛选半成品列表
+            def filter_material_listbox():
+                search_text = material_search_var.get().lower()
+                material_listbox.delete(0, tk.END)
+                for name in original_material_data:
+                    if search_text in name.lower():
+                        material_listbox.insert(tk.END, name)
+
+            # 绑定搜索事件
+            base_search_var.trace_add("write", lambda *args: filter_base_listbox())
+            material_search_var.trace_add("write", lambda *args: filter_material_listbox())
+
+            # 初始填充列表
+            filter_base_listbox()
+            filter_material_listbox()
 
             # 添加按钮
             def add_selected_material():
@@ -677,6 +699,8 @@ class BOMGUI:
 
         # 创建根节点
         recipe_root = recipe_tree.insert("", "end", text="新配方", values=("", "成品"))
+        # 展开新插入的节点
+        recipe_tree.item(recipe_root, open=True)
 
         # 操作按钮
         button_frame = tk.Frame(self.root)
@@ -703,12 +727,7 @@ class BOMGUI:
                     material = next((b for b in self.base_data if b['name'] == material_name), None)
                     if material:
                         material_id = material['id']
-                        material_type = "材料"
-                    else:
-                        material = next((p for p in self.products_data if p['name'] == material_name), None)
-                        if material:
-                            material_id = material['id']
-                            material_type = "成品"
+                        material_type = "原材料"
 
                 if material_id:
                     new_node = recipe_tree.insert(
@@ -727,7 +746,7 @@ class BOMGUI:
             requirements = material.get('requirements', [])
 
             for req in requirements:
-                req_type = '半成品' if 'material_id' in req else '材料'
+                req_type = '半成品' if 'material_id' in req else '原材料'
                 req_id = req.get('material_id', req.get('base_id'))
                 req_qty = req['quantity']
 
@@ -740,11 +759,11 @@ class BOMGUI:
                     if req_data:
                         req_name = req_data['name']
                         req_item_type = "半成品"
-                else:  # 材料
+                else:  # 原材料
                     req_data = next((b for b in self.base_data if b['id'] == req_id), None)
                     if req_data:
                         req_name = req_data['name']
-                        req_item_type = "材料"
+                        req_item_type = "原材料"
 
                 if not req_name:
                     req_name = f"未知材料(ID:{req_id})"
@@ -774,6 +793,7 @@ class BOMGUI:
             quantity_entry = tk.Entry(dialog)
             quantity_entry.insert(0, "1")
             quantity_entry.pack(pady=5)
+            quantity_entry.focus_set()
 
             def save_quantity():
                 try:
@@ -812,6 +832,11 @@ class BOMGUI:
                 tk.messagebox.showerror("错误", "请输入配方名称")
                 return
 
+            # 检查是否已存在
+            if any(m['name'] == recipe_name for m in self.products_data):
+                tk.messagebox.showerror("错误", f"成品 '{recipe_name}' 已存在")
+                return
+
             try:
                 output_qty = int(output_qty_entry.get())
                 if output_qty <= 0:
@@ -843,60 +868,6 @@ class BOMGUI:
             self.products_data.append(new_recipe)
             self.save_product()
 
-            # 检查是否有新的原材料或半成品需要添加
-            new_base_materials = []
-            new_materials = []
-
-            def check_new_materials(node_id):
-                item = recipe_tree.item(node_id)
-                tags = item['tags']
-                if not tags:
-                    return
-
-                tag = tags[0]
-                parts = tag.split('_')
-                if len(parts) != 2:
-                    return
-
-                material_type, material_id = parts[0], int(parts[1])
-                material_name = item['text']
-
-                if material_type == "材料":
-                    existing_material = next((m for m in self.materials_data if m['id'] == material_id), None)
-                    if not existing_material:
-                        new_material = {
-                            "id": material_id,
-                            "name": material_name,
-                            "requirements": []
-                        }
-                        new_materials.append(new_material)
-                elif material_type == "半成品":
-                    existing_base = next((b for b in self.base_data if b['id'] == material_id), None)
-                    if not existing_base:
-                        new_base = {
-                            "id": material_id,
-                            "name": material_name,
-                            "requirements": []
-                        }
-                        new_base_materials.append(new_base)
-
-                children = recipe_tree.get_children(node_id)
-                for child_id in children:
-                    check_new_materials(child_id)
-
-            for child_id in recipe_tree.get_children(recipe_root):
-                check_new_materials(child_id)
-
-            # 添加新的原材料到 base_data
-            for new_base in new_base_materials:
-                self.base_data.append(new_base)
-            self.save_base()
-
-            # 添加新的半成品到 materials_data
-            for new_material in new_materials:
-                self.materials_data.append(new_material)
-            self.save_material()
-
             tk.messagebox.showinfo("成功", f"配方 {recipe_name} 已保存")
             self.show_add_recipe_page()
 
@@ -915,15 +886,8 @@ class BOMGUI:
             material_type, material_id = parts[0], int(parts[1])
             quantity = int(item['values'][0])
 
-            req_key = "material_id" if material_type == "材料" else "base_id"
+            req_key = "material_id" if material_type == "半成品" else "base_id"
             requirement = {req_key: material_id, "quantity": quantity}
-
-            # 处理子节点
-            children = recipe_tree.get_children(node_id)
-            if children:
-                requirement['children'] = []
-                for child_id in children:
-                    requirement['children'].extend(build_requirements(child_id))
 
             return [requirement]
 

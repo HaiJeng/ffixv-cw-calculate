@@ -137,5 +137,24 @@
         "quantity": 1
       }
     ]
+  },
+  {
+    "id": 9,
+    "name": "白钢厨刀",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 9,
+        "quantity": 1
+      },
+      {
+        "material_id": 10,
+        "quantity": 1
+      }
+    ]
   }
 ]

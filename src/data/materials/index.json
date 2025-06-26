@@ -173,5 +173,23 @@
         "quantity": 2
       }
     ]
+  },
+  {
+    "id": 91,
+    "name": "未提纯刚力炼金溶剂",
+    "requirements": [
+      {
+        "base_id": 87,
+        "quantity": 2
+      },
+      {
+        "base_id": 88,
+        "quantity": 1
+      },
+      {
+        "base_id": 89,
+        "quantity": 1
+      }
+    ]
   }
 ]
