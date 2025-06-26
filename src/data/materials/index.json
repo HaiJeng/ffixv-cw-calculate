@@ -115,5 +115,63 @@
         "quantity": 2
       }
     ]
+  },
+  {
+    "id": 23,
+    "name": "蟹油",
+    "requirements": [
+      {
+        "base_id": 86,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 87,
+    "name": "巨蟾蜍革",
+    "requirements": [
+      {
+        "base_id": 62,
+        "quantity": 2
+      },
+      {
+        "base_id": 61,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 88,
+    "name": "白钢铆钉",
+    "requirements": [
+      {
+        "base_id": 19,
+        "quantity": 2
+      },
+      {
+        "base_id": 20,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 89,
+    "name": "亚麻油",
+    "requirements": [
+      {
+        "base_id": 70,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 90,
+    "name": "鱼胶",
+    "requirements": [
+      {
+        "base_id": 83,
+        "quantity": 2
+      }
+    ]
   }
 ]
