@@ -424,6 +424,8 @@ class BOMGUI:
                 dialog.destroy()
                 # tk.messagebox.showinfo("成功", f"原材料 '{name}' 已创建")
 
+            # 绑定回车键到保存函数
+            name_entry.bind("<Return>", lambda event: save_new_base())
             tk.Button(dialog, text="创建", command=save_new_base).pack(pady=10)
 
         tk.Button(button_frame, text="创建原材料", command=create_new_base_material).pack(side=tk.LEFT, padx=5)
