@@ -225,5 +225,113 @@
         "quantity": 2
       }
     ]
+  },
+  {
+    "id": 95,
+    "name": "未提纯巧力炼金溶剂",
+    "requirements": [
+      {
+        "base_id": 87,
+        "quantity": 2
+      },
+      {
+        "base_id": 91,
+        "quantity": 1
+      },
+      {
+        "base_id": 92,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 96,
+    "name": "亚麻线",
+    "requirements": [
+      {
+        "base_id": 70,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 97,
+    "name": "橡木木材",
+    "requirements": [
+      {
+        "base_id": 28,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 98,
+    "name": "野猪革",
+    "requirements": [
+      {
+        "base_id": 63,
+        "quantity": 2
+      },
+      {
+        "base_id": 61,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 99,
+    "name": "秘银锭",
+    "requirements": [
+      {
+        "base_id": 33,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 100,
+    "name": "未提纯速力炼金溶剂",
+    "requirements": [
+      {
+        "base_id": 87,
+        "quantity": 2
+      },
+      {
+        "base_id": 94,
+        "quantity": 1
+      },
+      {
+        "base_id": 95,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 101,
+    "name": "水银",
+    "requirements": [
+      {
+        "base_id": 76,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "name": "植物成长剂2型",
+    "requirements": [
+      {
+        "base_id": 96,
+        "quantity": 2
+      },
+      {
+        "base_id": 97,
+        "quantity": 1
+      },
+      {
+        "material_id": 101,
+        "quantity": 1
+      }
+    ]
   }
 ]

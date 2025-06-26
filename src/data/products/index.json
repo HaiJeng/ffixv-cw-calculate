@@ -323,5 +323,85 @@
         "quantity": 1
       }
     ]
+  },
+  {
+    "id": 21,
+    "name": "橡木长弓",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 97,
+        "quantity": 3
+      },
+      {
+        "material_id": 96,
+        "quantity": 1
+      },
+      {
+        "material_id": 8,
+        "quantity": 1
+      },
+      {
+        "material_id": 95,
+        "quantity": 1
+      },
+      {
+        "base_id": 93,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": "秘银骑枪",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 97,
+        "quantity": 3
+      },
+      {
+        "material_id": 98,
+        "quantity": 1
+      },
+      {
+        "material_id": 99,
+        "quantity": 1
+      },
+      {
+        "material_id": 100,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "白钢长枪",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 9,
+        "quantity": 3
+      },
+      {
+        "material_id": 8,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": "胡桃木长杖",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 9,
+        "quantity": 3
+      },
+      {
+        "material_id": 102,
+        "quantity": 1
+      }
+    ]
   }
 ]
