@@ -14,6 +14,7 @@ class BOMGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("BOM Calculator and Generator")
+        self.root.geometry("1000x800")
         with open(f'{save_path}/base/index.json', encoding='UTF-8') as f:
             self.base_data = json.load(f)
         with open(f'{save_path}/materials/index.json', encoding='UTF-8') as f:
