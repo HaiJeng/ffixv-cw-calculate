@@ -15,17 +15,20 @@ class BOMGUI:
         self.root = root
         self.root.title("BOM Calculator and Generator")
         self.root.geometry("1000x800")
-        with open(f'{save_path}/base/index.json', encoding='UTF-8') as f:
-            self.base_data = json.load(f)
-        with open(f'{save_path}/materials/index.json', encoding='UTF-8') as f:
-            self.materials_data = json.load(f)
-        with open(f'{save_path}/products/index.json', encoding='UTF-8') as f:
-            self.products_data = json.load(f)
-        self.calculator = BOMCalculator(self.base_data, self.materials_data, self.products_data)
-        self.generator = BOMGenerator(self.base_data, self.materials_data, self.products_data)
+
+        # 初始化数据存储变量（避免后续报错）
+        self.base_data = []
+        self.materials_data = []
+        self.products_data = []
+
+        # 加载数据并初始化计算器和生成器
+        self.reload_data()
+
+        # 初始化窗口变量
         self.result_window = None
         self.recipe_tree_window = None
 
+        # 创建主界面
         self.create_homepage()
 
     def create_homepage(self):
@@ -1129,14 +1132,30 @@ class BOMGUI:
     def save_base(self):
         with open(f'{save_path}/base/index.json', 'w', encoding='UTF-8') as f:
             json.dump(self.base_data, f, indent=2, ensure_ascii=False)
+        self.reload_data()  # 重新加载数据
 
     def save_material(self):
         with open(f'{save_path}/materials/index.json', 'w', encoding='UTF-8') as f:
             json.dump(self.materials_data, f, indent=2, ensure_ascii=False)
+        self.reload_data()  # 重新加载数据
 
     def save_product(self):
         with open(f'{save_path}/products/index.json', 'w', encoding='UTF-8') as f:
             json.dump(self.products_data, f, indent=2, ensure_ascii=False)
+        self.reload_data()  # 重新加载数据
+
+    def reload_data(self):
+        """重新从文件加载数据并更新计算器和生成器"""
+        with open(f'{save_path}/base/index.json', encoding='UTF-8') as f:
+            self.base_data = json.load(f)
+        with open(f'{save_path}/materials/index.json', encoding='UTF-8') as f:
+            self.materials_data = json.load(f)
+        with open(f'{save_path}/products/index.json', encoding='UTF-8') as f:
+            self.products_data = json.load(f)
+
+        # 重新初始化计算器和生成器
+        self.calculator = BOMCalculator(self.base_data, self.materials_data, self.products_data)
+        self.generator = BOMGenerator(self.base_data, self.materials_data, self.products_data)
 
     def create_centered_window(self, title="新窗口", width=800, height=600, modal=False, resizable=(True, True),
                                on_create=None):

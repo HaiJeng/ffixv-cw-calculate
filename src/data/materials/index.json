@@ -201,5 +201,29 @@
         "quantity": 2
       }
     ]
+  },
+  {
+    "id": 93,
+    "name": "白钢板",
+    "requirements": [
+      {
+        "base_id": 19,
+        "quantity": 2
+      },
+      {
+        "base_id": 20,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 94,
+    "name": "榆木木材",
+    "requirements": [
+      {
+        "base_id": 25,
+        "quantity": 2
+      }
+    ]
   }
 ]

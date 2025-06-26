@@ -274,5 +274,54 @@
         "quantity": 1
       }
     ]
+  },
+  {
+    "id": 18,
+    "name": "白钢宽刃剑",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 1
+      },
+      {
+        "material_id": 9,
+        "quantity": 1
+      },
+      {
+        "base_id": 90,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "name": "白钢蒸馏器",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 93,
+        "quantity": 3
+      },
+      {
+        "material_id": 88,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "白钢平底锅",
+    "output": 1,
+    "requirements": [
+      {
+        "material_id": 8,
+        "quantity": 3
+      },
+      {
+        "material_id": 94,
+        "quantity": 1
+      }
+    ]
   }
 ]
