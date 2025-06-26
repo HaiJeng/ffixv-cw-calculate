@@ -390,11 +390,12 @@ class BOMGUI:
         button_frame.pack(fill=tk.X, pady=5)
 
         def create_new_base_material():
-            dialog = self.create_centered_window("创建新原材料", 300, 150,True)
+            dialog = self.create_centered_window("创建新原材料", 300, 150, True)
 
             tk.Label(dialog, text="原材料名称:").pack(pady=10)
             name_entry = tk.Entry(dialog)
             name_entry.pack(pady=5)
+            name_entry.focus_set()
 
             def save_new_base():
                 name = name_entry.get().strip()
@@ -421,14 +422,14 @@ class BOMGUI:
                 self.filter_materials(material_search_entry.get(), material_type_var.get(), material_listbox)
 
                 dialog.destroy()
-                tk.messagebox.showinfo("成功", f"原材料 '{name}' 已创建")
+                # tk.messagebox.showinfo("成功", f"原材料 '{name}' 已创建")
 
             tk.Button(dialog, text="创建", command=save_new_base).pack(pady=10)
 
         tk.Button(button_frame, text="创建原材料", command=create_new_base_material).pack(side=tk.LEFT, padx=5)
 
         def create_new_material():
-            dialog=self.create_centered_window("创建新半成品", 300, 150,True)
+            dialog = self.create_centered_window("创建新半成品", 300, 150, True)
 
             # 顶部：半成品名称
             name_frame = tk.Frame(dialog)
@@ -612,7 +613,7 @@ class BOMGUI:
                 self.filter_materials(material_search_entry.get(), material_type_var.get(), material_listbox)
 
                 dialog.destroy()
-                tk.messagebox.showinfo("成功", f"半成品 '{name}' 已创建")
+                # tk.messagebox.showinfo("成功", f"半成品 '{name}' 已创建")
 
             tk.Button(button_frame, text="保存", command=save_new_material).pack(side=tk.RIGHT)
 
@@ -765,7 +766,7 @@ class BOMGUI:
                 return
 
             # 创建对话框
-            dialog=self.create_centered_window("设置数量",300,150,True)
+            dialog = self.create_centered_window("设置数量", 300, 150, True)
 
             tk.Label(dialog, text="数量:").pack(pady=20)
             quantity_entry = tk.Entry(dialog)
@@ -958,6 +959,19 @@ class BOMGUI:
         # 创建标题
         tk.Label(self.root, text="删除配方", font=("Arial", 16)).pack(pady=10)
 
+        # 创建类型选择器
+        type_frame = tk.Frame(self.root)
+        type_frame.pack(fill=tk.X, padx=20, pady=10)
+
+        tk.Label(type_frame, text="项目类型:").pack(side=tk.LEFT)
+        type_var = tk.StringVar(value="product")  # 默认选择products
+
+        # 类型选择按钮
+        tk.Radiobutton(type_frame, text="所有", variable=type_var, value="all").pack(side=tk.LEFT)
+        tk.Radiobutton(type_frame, text="成品", variable=type_var, value="product").pack(side=tk.LEFT)
+        tk.Radiobutton(type_frame, text="原材料", variable=type_var, value="base").pack(side=tk.LEFT)
+        tk.Radiobutton(type_frame, text="半成品", variable=type_var, value="material").pack(side=tk.LEFT)
+
         # 创建搜索区域
         search_frame = tk.Frame(self.root)
         search_frame.pack(fill=tk.X, padx=20, pady=10)
@@ -965,8 +979,38 @@ class BOMGUI:
         tk.Label(search_frame, text="搜索配方:").pack(side=tk.LEFT)
         search_entry = tk.Entry(search_frame, width=30)
         search_entry.pack(side=tk.LEFT, padx=5)
-        search_entry.bind("<KeyRelease>", lambda event: self.filter_delete_recipes(
-            search_entry.get(), recipe_listbox))
+
+        # 当前使用的列表框和数据
+        current_listbox = None
+        current_data = None
+
+        # 更新列表框内容的函数
+        def update_listbox():
+            nonlocal current_listbox, current_data
+            list_type = type_var.get()
+
+            # 根据选择的类型获取对应数据
+            if list_type == 'all':
+                current_data = self.products_data + self.base_data + self.materials_data
+            if list_type == "product":
+                current_data = self.products_data
+            elif list_type == "material":
+                current_data = self.materials_data
+            else:  # base
+                current_data = self.base_data
+
+            # 清空列表框
+            current_listbox.delete(0, tk.END)
+
+            # 填充列表框
+            search_text = search_entry.get()
+            for item in current_data:
+                if search_text in item['name']:
+                    current_listbox.insert(tk.END, item['name'])
+
+        # 绑定搜索框事件和类型选择事件
+        search_entry.bind("<KeyRelease>", lambda event: update_listbox())
+        type_var.trace_add("write", lambda *args: update_listbox())
 
         # 创建配方列表
         list_frame = tk.Frame(self.root)
@@ -977,12 +1021,13 @@ class BOMGUI:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # 创建列表框
-        recipe_listbox = tk.Listbox(list_frame, width=50, yscrollcommand=scrollbar.set)
-        recipe_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=recipe_listbox.yview)
+        current_listbox = tk.Listbox(list_frame, width=50, yscrollcommand=scrollbar.set)
+        current_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=current_listbox.yview)
 
         # 填充配方列表
-        self.fill_recipe_listbox(recipe_listbox)
+        # 初始填充列表框
+        update_listbox()
 
         # 创建按钮区域
         button_frame = tk.Frame(self.root)
@@ -990,44 +1035,76 @@ class BOMGUI:
 
         # 查看配方按钮
         def view_selected_recipe():
-            selection = recipe_listbox.curselection()
+            selection = current_listbox.curselection()
             if not selection:
                 messagebox.showinfo("提示", "请先选择一个配方")
                 return
 
-            recipe_name = recipe_listbox.get(selection[0])
-            self.show_recipe_tree(recipe_name)  # 指定返回删除页面
+            item_name = current_listbox.get(selection[0])
+            item_type = type_var.get()
+
+            if item_type == "product":
+                self.show_recipe_tree(item_name)  # 查看产品配方树
+            else:
+                # 查看原材料或基础材料信息
+                dialog = self.create_centered_window(f"{item_name} 信息", 400, 300, True)
+
+                # 查找项目信息
+                item_info = next((item for item in current_data if item['name'] == item_name), None)
+                if item_info:
+                    # 显示项目信息
+                    for key, value in item_info.items():
+                        tk.Label(dialog, text=f"{key}: {value}").pack(anchor=tk.W, padx=10, pady=5)
+                else:
+                    tk.Label(dialog, text="未找到项目信息").pack(padx=10, pady=10)
 
         tk.Button(button_frame, text="查看配方", command=view_selected_recipe).pack(side=tk.LEFT, padx=5)
 
         # 删除配方按钮
-        def delete_selected_recipe():
-            selection = recipe_listbox.curselection()
+        def delete_selected_item():
+            selection = current_listbox.curselection()
             if not selection:
                 messagebox.showinfo("提示", "请先选择一个配方")
                 return
 
-            recipe_name = recipe_listbox.get(selection[0])
-            confirm = messagebox.askyesno("确认删除", f"确定要删除配方 '{recipe_name}' 吗？")
+            item_name = current_listbox.get(selection[0])
+            item_type = type_var.get()
+            confirm = messagebox.askyesno("确认删除",
+                                          f"确定要删除{item_type == 'products' and '配方' or '项目'} '{item_name}' 吗？")
 
             if confirm:
-                # 查找并删除配方
-                for i, product in enumerate(self.products_data):
-                    if product['name'] == recipe_name:
-                        del self.products_data[i]
+                # 查找并删除项目
+                data_list = None
+                save_method = None
+
+                if item_type == "products":
+                    data_list = self.products_data
+                    save_method = self.save_product
+                elif item_type == "materials":
+                    data_list = self.materials_data
+                    save_method = self.save_material
+                else:  # base
+                    data_list = self.base_data
+                    save_method = self.save_base
+
+                # 从数据中删除
+                for i, item in enumerate(data_list):
+                    if item['name'] == item_name:
+                        del data_list[i]
                         break
 
                 # 从列表中删除
-                recipe_listbox.delete(selection[0])
+                current_listbox.delete(selection[0])
 
                 # 保存到文件
                 try:
-                    self.save_product()
-                    messagebox.showinfo("成功", f"配方 '{recipe_name}' 已删除")
+                    if save_method:
+                        save_method()
+                    messagebox.showinfo("成功", f"{item_type == 'products' and '配方' or '项目'} '{item_name}' 已删除")
                 except Exception as e:
                     messagebox.showerror("错误", f"保存失败: {str(e)}")
 
-        tk.Button(button_frame, text="删除配方", command=delete_selected_recipe).pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="删除项目", command=delete_selected_item).pack(side=tk.LEFT, padx=5)
 
         # 返回按钮
         tk.Button(button_frame, text="返回", command=self.create_homepage).pack(side=tk.RIGHT, padx=5)
@@ -1059,7 +1136,8 @@ class BOMGUI:
         with open(f'{save_path}/products/index.json', 'w', encoding='UTF-8') as f:
             json.dump(self.products_data, f, indent=2, ensure_ascii=False)
 
-    def create_centered_window(self, title="新窗口", width=800, height=600, modal=False, resizable=(True, True)):
+    def create_centered_window(self, title="新窗口", width=800, height=600, modal=False, resizable=(True, True),
+                               on_create=None):
         """创建一个居中于主窗口的顶级窗口，可选择是否为模态对话框及是否可调整大小"""
         # 获取主窗口位置和尺寸
         x = self.root.winfo_x()
@@ -1083,5 +1161,8 @@ class BOMGUI:
         # 如果是模态对话框，添加 grab_set
         if modal:
             window.grab_set()
+        # 执行回调函数（如果提供）
+        if on_create:
+            on_create(window)
 
         return window  # 返回新创建的窗口

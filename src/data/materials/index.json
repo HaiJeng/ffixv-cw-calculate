@@ -71,5 +71,49 @@
         "quantity": 2
       }
     ]
+  },
+  {
+    "id": 8,
+    "name": "白钢锭",
+    "requirements": [
+      {
+        "base_id": 20,
+        "quantity": 1
+      },
+      {
+        "base_id": 19,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "胡桃木材",
+    "requirements": [
+      {
+        "base_id": 21,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "粉砂岩磨刀石",
+    "requirements": [
+      {
+        "base_id": 22,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "砂岩磨刀石",
+    "requirements": [
+      {
+        "base_id": 35,
+        "quantity": 2
+      }
+    ]
   }
 ]
