@@ -11,6 +11,8 @@
 
 界面使用tkinter
 
+因为网络问题,后续更新我将推送在[gitee](https://gitee.com/UnKfrozen/ffixv-cw-calculate.git)上
+
 ## 目前进度
 
 1. 多配方合并计算
